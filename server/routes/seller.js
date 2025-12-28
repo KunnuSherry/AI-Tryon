@@ -1,7 +1,15 @@
 import express from 'express';
 import User from '../models/User.js';
+import Product from '../models/Product.js';
 import { authenticate } from '../middleware/auth.js';
-import { requireAuth } from '../middleware/rbac.js';
+import { requireAuth, requireSeller } from '../middleware/rbac.js';
+import { upload } from '../middleware/upload.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -100,6 +108,134 @@ router.get('/profile', async (req, res) => {
     res.status(500).json({ 
       error: 'Internal Server Error', 
       message: 'Failed to get seller profile' 
+    });
+  }
+});
+
+/**
+ * POST /api/seller/products
+ * Upload a new product (only APPROVED sellers)
+ */
+router.post('/products', requireSeller, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Product image is required'
+      });
+    }
+
+    const { name, category, description, price } = req.body;
+
+    // Validation
+    if (!name || !category || !price) {
+      // Delete uploaded file if validation fails
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Name, category, and price are required'
+      });
+    }
+
+    if (!['earrings', 'glasses'].includes(category)) {
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Category must be either "earrings" or "glasses"'
+      });
+    }
+
+    const priceNum = parseFloat(price);
+    if (isNaN(priceNum) || priceNum < 0) {
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Price must be a valid positive number'
+      });
+    }
+
+    // Create product
+    const product = new Product({
+      sellerId: req.user._id,
+      name,
+      category,
+      description: description || '',
+      price: priceNum,
+      image: {
+        original: `/uploads/${req.file.filename}`,
+      },
+      status: 'PENDING',
+    });
+
+    await product.save();
+
+    res.status(201).json({
+      message: 'Product uploaded successfully',
+      product: {
+        id: product._id,
+        name: product.name,
+        category: product.category,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        status: product.status,
+        tryOnCount: product.tryOnCount,
+        createdAt: product.createdAt,
+      }
+    });
+  } catch (error) {
+    console.error('Upload product error:', error);
+    // Delete uploaded file on error
+    if (req.file) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to upload product'
+    });
+  }
+});
+
+/**
+ * GET /api/seller/products
+ * Get all products uploaded by the seller
+ */
+router.get('/products', async (req, res) => {
+  try {
+    if (req.user.role !== 'SELLER') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only sellers can view their products'
+      });
+    }
+
+    const products = await Product.find({ sellerId: req.user._id })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      products: products.map(product => ({
+        id: product._id,
+        name: product.name,
+        category: product.category,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        status: product.status,
+        tryOnCount: product.tryOnCount,
+        createdAt: product.createdAt,
+      }))
+    });
+  } catch (error) {
+    console.error('Get seller products error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to get products'
     });
   }
 });

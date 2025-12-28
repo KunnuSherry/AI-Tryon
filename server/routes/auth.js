@@ -226,10 +226,14 @@ router.get('/me', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get user error:', error);
+    // Don't log expired/invalid tokens as errors - this is expected behavior
+    // Only log unexpected errors
+    if (error.message !== 'Invalid or expired token' && error.message !== 'No token provided') {
+      console.error('Get user error:', error);
+    }
     res.status(401).json({ 
       error: 'Unauthorized', 
-      message: 'Invalid token' 
+      message: error.message || 'Invalid token' 
     });
   }
 });

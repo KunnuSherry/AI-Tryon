@@ -109,3 +109,92 @@ export const rejectSeller = async (sellerId) => {
   });
 };
 
+/**
+ * Product API functions
+ */
+export const uploadProduct = async (formData) => {
+  const token = getToken();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+  
+  const response = await fetch(`${API_BASE_URL}/seller/products`, {
+    method: 'POST',
+    headers: {
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+    credentials: 'include',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
+    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+export const getSellerProducts = async () => {
+  return apiClient('/seller/products');
+};
+
+export const getProducts = async (category = null) => {
+  const query = category ? `?category=${category}` : '';
+  return apiClient(`/products${query}`);
+};
+
+export const getTrendingProducts = async (category = null, limit = 10) => {
+  const query = category ? `?category=${category}&limit=${limit}` : `?limit=${limit}`;
+  return apiClient(`/products/trending${query}`);
+};
+
+export const getProduct = async (productId) => {
+  return apiClient(`/products/${productId}`);
+};
+
+/**
+ * Admin Product API functions
+ */
+export const getPendingProducts = async () => {
+  return apiClient('/admin/products/pending');
+};
+
+export const approveProduct = async (productId) => {
+  return apiClient(`/admin/products/${productId}/approve`, {
+    method: 'POST',
+  });
+};
+
+export const rejectProduct = async (productId) => {
+  return apiClient(`/admin/products/${productId}/reject`, {
+    method: 'POST',
+  });
+};
+
+/**
+ * Try-On API functions
+ */
+export const submitTryOn = async (productId, mediaFile) => {
+  const token = getToken();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+  
+  const formData = new FormData();
+  formData.append('productId', productId);
+  formData.append('media', mediaFile);
+
+  const response = await fetch(`${API_BASE_URL}/tryon`, {
+    method: 'POST',
+    headers: {
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+    credentials: 'include',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
+    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
+

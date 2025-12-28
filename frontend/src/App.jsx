@@ -7,7 +7,10 @@ import Dashboard from './pages/Dashboard'
 import SellerApply from './pages/SellerApply'
 import SellerPending from './pages/SellerPending'
 import SellerDashboard from './pages/SellerDashboard'
+import AddProduct from './pages/AddProduct'
+import SellerProducts from './pages/SellerProducts'
 import AdminDashboard from './pages/AdminDashboard'
+import TryOn from './pages/TryOn'
 import ProtectedRoute from './components/ProtectedRoute'
 
 // Component to check auth and redirect if logged in
@@ -123,6 +126,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/seller/products/add"
+            element={
+              <ProtectedRoute>
+                <AddProduct />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/seller/products"
+            element={
+              <ProtectedRoute>
+                <SellerProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tryon/:id"
+            element={
+              <ProtectedRoute>
+                <TryOn />
               </ProtectedRoute>
             }
           />

@@ -1,29 +1,35 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { getPendingSellers, approveSeller, rejectSeller } from '../api/client'
+import { getPendingSellers, approveSeller, rejectSeller, getPendingProducts, approveProduct, rejectProduct } from '../api/client'
 import Navbar from '../components/Navbar'
 
 const AdminDashboard = () => {
   const { user } = useAuth()
   const [pendingSellers, setPendingSellers] = useState([])
+  const [pendingProducts, setPendingProducts] = useState([])
+  const [activeTab, setActiveTab] = useState('sellers') // 'sellers' or 'products'
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(null)
 
   useEffect(() => {
-    const fetchPendingSellers = async () => {
+    const fetchData = async () => {
       try {
-        const result = await getPendingSellers()
-        setPendingSellers(result.sellers)
+        const [sellersResult, productsResult] = await Promise.all([
+          getPendingSellers(),
+          getPendingProducts()
+        ])
+        setPendingSellers(sellersResult.sellers || [])
+        setPendingProducts(productsResult.products || [])
       } catch (error) {
-        console.error('Error fetching pending sellers:', error)
-        alert('Error loading pending sellers: ' + error.message)
+        console.error('Error fetching data:', error)
+        alert('Error loading data: ' + error.message)
       } finally {
         setLoading(false)
       }
     }
 
     if (user && user.role === 'ADMIN') {
-      fetchPendingSellers()
+      fetchData()
     } else {
       setLoading(false)
     }
@@ -58,6 +64,35 @@ const AdminDashboard = () => {
     }
   }
 
+  const handleApproveProduct = async (productId) => {
+    setProcessing(productId)
+    try {
+      await approveProduct(productId)
+      setPendingProducts(pendingProducts.filter(product => product.id !== productId))
+      alert('Product approved successfully!')
+    } catch (error) {
+      alert('Error approving product: ' + error.message)
+    } finally {
+      setProcessing(null)
+    }
+  }
+
+  const handleRejectProduct = async (productId) => {
+    if (!confirm('Are you sure you want to reject this product?')) {
+      return
+    }
+    setProcessing(productId)
+    try {
+      await rejectProduct(productId)
+      setPendingProducts(pendingProducts.filter(product => product.id !== productId))
+      alert('Product rejected successfully!')
+    } catch (error) {
+      alert('Error rejecting product: ' + error.message)
+    } finally {
+      setProcessing(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#302649] flex items-center justify-center">
@@ -83,9 +118,29 @@ const AdminDashboard = () => {
           
           <div className="glass-panel p-6 rounded-lg mb-6">
             <h2 className="text-2xl font-semibold mb-2">Welcome, Admin!</h2>
-            <p className="text-white/70">Manage seller applications and user accounts.</p>
+            <p className="text-white/70">Manage seller applications and product approvals.</p>
           </div>
 
+          <div className="flex gap-4 mb-6">
+            <button
+              onClick={() => setActiveTab('sellers')}
+              className={`px-6 py-2 rounded-lg transition-colors ${
+                activeTab === 'sellers' ? 'bg-purple-600' : 'bg-white/10 hover:bg-white/20'
+              }`}
+            >
+              Pending Sellers ({pendingSellers.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`px-6 py-2 rounded-lg transition-colors ${
+                activeTab === 'products' ? 'bg-purple-600' : 'bg-white/10 hover:bg-white/20'
+              }`}
+            >
+              Pending Products ({pendingProducts.length})
+            </button>
+          </div>
+
+          {activeTab === 'sellers' && (
           <div className="glass-panel p-6 rounded-lg">
             <h3 className="text-xl font-semibold mb-4">
               Pending Seller Applications ({pendingSellers.length})
@@ -154,6 +209,59 @@ const AdminDashboard = () => {
               </div>
             )}
           </div>
+          )}
+
+          {activeTab === 'products' && (
+          <div className="glass-panel p-6 rounded-lg">
+            <h3 className="text-xl font-semibold mb-4">
+              Pending Products ({pendingProducts.length})
+            </h3>
+
+            {pendingProducts.length === 0 ? (
+              <p className="text-white/70 text-center py-8">No pending products</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pendingProducts.map((product) => (
+                  <div key={product.id} className="bg-white/5 p-4 rounded-lg border border-white/10">
+                    <div className="aspect-square bg-white/10 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                      {product.image?.original ? (
+                        <img
+                          src={`http://localhost:5000${product.image.original}`}
+                          alt={product.name}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-white/50">No Image</span>
+                      )}
+                    </div>
+                    <h4 className="font-semibold mb-1">{product.name}</h4>
+                    <p className="text-sm text-white/70 capitalize mb-2">{product.category}</p>
+                    <p className="text-sm text-white/70 mb-2">${product.price}</p>
+                    <p className="text-xs text-white/60 mb-3">
+                      Seller: {product.sellerName || 'Unknown'}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleApproveProduct(product.id)}
+                        disabled={processing === product.id}
+                        className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                      >
+                        {processing === product.id ? 'Processing...' : 'Approve'}
+                      </button>
+                      <button
+                        onClick={() => handleRejectProduct(product.id)}
+                        disabled={processing === product.id}
+                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                      >
+                        {processing === product.id ? 'Processing...' : 'Reject'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          )}
         </div>
       </div>
     </div>

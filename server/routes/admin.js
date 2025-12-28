@@ -1,5 +1,6 @@
 import express from 'express';
 import User from '../models/User.js';
+import Product from '../models/Product.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireAuth, requireAdmin } from '../middleware/rbac.js';
 
@@ -158,6 +159,141 @@ router.get('/users', async (req, res) => {
     res.status(500).json({ 
       error: 'Internal Server Error', 
       message: 'Failed to get users' 
+    });
+  }
+});
+
+/**
+ * GET /api/admin/products/pending
+ * Get all pending products
+ */
+router.get('/products/pending', async (req, res) => {
+  try {
+    const products = await Product.find({ status: 'PENDING' })
+      .populate('sellerId', 'username email sellerProfile')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      products: products.map(product => ({
+        id: product._id,
+        sellerId: product.sellerId._id,
+        sellerName: product.sellerId.username,
+        sellerEmail: product.sellerId.email,
+        name: product.name,
+        category: product.category,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        status: product.status,
+        tryOnCount: product.tryOnCount,
+        createdAt: product.createdAt,
+      }))
+    });
+  } catch (error) {
+    console.error('Get pending products error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to get pending products'
+    });
+  }
+});
+
+/**
+ * POST /api/admin/products/:id/approve
+ * Approve a product
+ */
+router.post('/products/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Product not found'
+      });
+    }
+
+    if (product.status !== 'PENDING') {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: `Product is not pending. Current status: ${product.status}`
+      });
+    }
+
+    product.status = 'APPROVED';
+    await product.save();
+
+    res.json({
+      message: 'Product approved successfully',
+      product: {
+        id: product._id,
+        name: product.name,
+        category: product.category,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        status: product.status,
+        tryOnCount: product.tryOnCount,
+        createdAt: product.createdAt,
+      }
+    });
+  } catch (error) {
+    console.error('Approve product error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to approve product'
+    });
+  }
+});
+
+/**
+ * POST /api/admin/products/:id/reject
+ * Reject a product
+ */
+router.post('/products/:id/reject', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Product not found'
+      });
+    }
+
+    if (product.status !== 'PENDING') {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: `Product is not pending. Current status: ${product.status}`
+      });
+    }
+
+    product.status = 'REJECTED';
+    await product.save();
+
+    res.json({
+      message: 'Product rejected successfully',
+      product: {
+        id: product._id,
+        name: product.name,
+        category: product.category,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        status: product.status,
+        tryOnCount: product.tryOnCount,
+        createdAt: product.createdAt,
+      }
+    });
+  } catch (error) {
+    console.error('Reject product error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to reject product'
     });
   }
 });

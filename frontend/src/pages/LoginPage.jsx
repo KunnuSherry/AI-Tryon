@@ -2,7 +2,7 @@ import React from 'react'
 
 const LoginPage = () => {
     return (
-        <div className='flex flex-col lg:flex-row w-full min-h-screen bg-[#302649]'>
+        <div className='flex flex-col lg:flex-row w-full min-h-screen bg-[#352632]'>
             <div className='lg:w-4/6 w-full h-[40vh] lg:h-[100vh]'>
                 <video src="login.mp4" autoPlay muted loop className='w-full h-full object-cover'></video>
             </div>
