@@ -29,6 +29,14 @@ const Navbar = () => {
           AI Tryon
         </div>
         <div className="flex items-center gap-4">
+          {(user?.role === 'USER' || !user?.role) && (
+            <button
+              onClick={() => navigate('/profile')}
+              className="px-4 py-2 rounded-lg border border-white/30 text-white hover:bg-white/10 text-sm transition-colors"
+            >
+              My Profile
+            </button>
+          )}
           <span className="text-white/70 text-sm">
             {user?.username || user?.email}
           </span>

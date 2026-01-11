@@ -29,9 +29,9 @@ const AddProduct = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      // Validate file type
-      if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
-        setError('Only PNG and JPG images are allowed')
+      // Validate file type - PNG only
+      if (!file.type.match(/^image\/png$/)) {
+        setError('Only PNG images are allowed. Please upload a PNG file with transparent background.')
         return
       }
 
@@ -179,16 +179,24 @@ const AddProduct = () => {
               <label className="block text-sm font-semibold mb-2">
                 Product Image <span className="text-red-400">*</span>
               </label>
-              <p className="text-sm text-white/70 mb-2">
-                PNG or JPG, minimum 1024×1024, white or transparent background
-              </p>
+              <div className="bg-blue-500/20 border border-blue-500/50 text-blue-300 px-4 py-3 rounded-lg mb-3">
+                <p className="text-sm font-semibold mb-1">⚠️ Important: PNG Images Only</p>
+                <p className="text-xs text-blue-200/90">
+                  • Upload PNG images with transparent background only<br/>
+                  • Your product will be verified by an admin before being shown to users<br/>
+                  • After admin approval, your product will appear in the user dashboard
+                </p>
+              </div>
               <input
                 type="file"
-                accept="image/jpeg,image/jpg,image/png"
+                accept="image/png"
                 onChange={handleImageChange}
                 required
                 className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500"
               />
+              <p className="text-xs text-white/70 mt-2">
+                PNG format only - transparent background required
+              </p>
               {imagePreview && (
                 <div className="mt-4">
                   <img

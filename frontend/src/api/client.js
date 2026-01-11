@@ -173,28 +173,18 @@ export const rejectProduct = async (productId) => {
 /**
  * Try-On API functions
  */
-export const submitTryOn = async (productId, mediaFile) => {
-  const token = getToken();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-  
-  const formData = new FormData();
-  formData.append('productId', productId);
-  formData.append('media', mediaFile);
-
-  const response = await fetch(`${API_BASE_URL}/tryon`, {
+export const submitTryOn = async (productId, resultImageBase64, originalImageUrl = null) => {
+  return apiClient('/tryon', {
     method: 'POST',
-    headers: {
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-    },
-    credentials: 'include',
-    body: formData,
+    body: JSON.stringify({
+      productId,
+      resultImage: resultImageBase64,
+      originalImageUrl,
+    }),
   });
+};
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
-  }
-
-  return response.json();
+export const getTryOnHistory = async () => {
+  return apiClient('/tryon/history');
 };
 

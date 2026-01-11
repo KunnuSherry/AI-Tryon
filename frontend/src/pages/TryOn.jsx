@@ -70,7 +70,10 @@ const TryOn = () => {
         console.error('Error loading product image')
       }
       
-      img.src = `http://localhost:5000${product.image.original}`
+      // Handle both Cloudinary URLs and local URLs
+      img.src = product.image.original.startsWith('http') 
+        ? product.image.original 
+        : `http://localhost:5000${product.image.original}`
     }
 
     loadProductImage()
@@ -208,6 +211,11 @@ const TryOn = () => {
     const file = e.target.files[0]
     if (!file) return
 
+    // If live mode is active, stop it first
+    if (isLiveMode) {
+      stopLiveCamera()
+    }
+
     if (file.type.startsWith('image/')) {
       setMediaType('photo')
       const reader = new FileReader()
@@ -256,19 +264,24 @@ const TryOn = () => {
               // Process with MediaPipe - this will trigger the callback
               processImage(faceMesh, imgElement)
               
-              // Wait a bit for MediaPipe to process
+              // Wait a bit for MediaPipe to process, then capture canvas and submit
               setTimeout(async () => {
-                // Submit try-on to backend
                 try {
-                  const response = await fetch(uploadedMedia)
-                  const blob = await response.blob()
-                  await submitTryOn(product.id, blob)
+                  // Capture canvas result as base64
+                  const canvas = canvasRef.current
+                  if (canvas) {
+                    const resultImageBase64 = canvas.toDataURL('image/png')
+                    
+                    // Submit try-on to backend with result image
+                    await submitTryOn(product.id, resultImageBase64, uploadedMedia)
+                  }
                 } catch (err) {
                   console.error('Error submitting try-on:', err)
+                  setError('Failed to save try-on result. Please try again.')
                 }
                 
                 setProcessing(false)
-              }, 1000) // Increased timeout for MediaPipe processing
+              }, 1500) // Wait for MediaPipe to complete processing
             } catch (err) {
               console.error('Error processing image:', err)
               setError('Failed to process image. Please try again.')
@@ -314,7 +327,10 @@ const TryOn = () => {
         setProcessing(false)
       }
       
-      productImg.src = `http://localhost:5000${product.image.original}`
+      // Handle both Cloudinary URLs and local URLs
+      productImg.src = product.image.original.startsWith('http') 
+        ? product.image.original 
+        : `http://localhost:5000${product.image.original}`
     } catch (err) {
       setError(err.message || 'Failed to process try-on')
       setProcessing(false)
@@ -366,13 +382,17 @@ const TryOn = () => {
                   <>
                     <img
                       ref={productImageRef}
-                      src={`http://localhost:5000${product.image.original}`}
+                      src={product.image.original.startsWith('http') 
+                        ? product.image.original 
+                        : `http://localhost:5000${product.image.original}`}
                       alt={product.name}
                       className="w-full h-full object-contain"
                       style={{ display: 'none' }} // Hidden, used for overlay
                     />
                     <img
-                      src={`http://localhost:5000${product.image.original}`}
+                      src={product.image.original.startsWith('http') 
+                        ? product.image.original 
+                        : `http://localhost:5000${product.image.original}`}
                       alt={product.name}
                       className="w-full h-full object-contain"
                     />
@@ -479,7 +499,23 @@ const TryOn = () => {
                 )}
 
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Try-On Result</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold">Try-On Result</h3>
+                    <button
+                      onClick={() => {
+                        const canvas = canvasRef.current
+                        if (canvas) {
+                          const link = document.createElement('a')
+                          link.download = `tryon-${product.name}-${Date.now()}.png`
+                          link.href = canvas.toDataURL('image/png')
+                          link.click()
+                        }
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    >
+                      📥 Download
+                    </button>
+                  </div>
                   <canvas
                     ref={canvasRef}
                     className="w-full rounded-lg border border-white/20"

@@ -11,6 +11,7 @@ import AddProduct from './pages/AddProduct'
 import SellerProducts from './pages/SellerProducts'
 import AdminDashboard from './pages/AdminDashboard'
 import TryOn from './pages/TryOn'
+import UserProfile from './pages/UserProfile'
 import ProtectedRoute from './components/ProtectedRoute'
 
 // Component to check auth and redirect if logged in
@@ -150,6 +151,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <TryOn />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
               </ProtectedRoute>
             }
           />

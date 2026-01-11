@@ -169,8 +169,27 @@ export function drawProductOverlay(canvas, productImage, landmarks, category, im
       Math.pow((rightEye.y - leftEye.y) * canvas.height, 2)
     );
 
-    // Earring size = faceWidth × 0.25 (increased from 0.15 for larger earrings)
-    const earringWidth = faceWidth * 0.50;
+    // ============================================
+    // EARING SIZE & POSITION SETTINGS
+    // ============================================
+    // To adjust earring size, change the multiplier below (0.75 = 75% of face width)
+    // Recommended range: 0.50 - 1.00
+    const EARING_SIZE_MULTIPLIER = 0.75;
+    
+    // To adjust earring width (makes it wider), change the multiplier below
+    // 1.0 = normal width, 1.2 = 20% wider, 1.5 = 50% wider
+    const EARING_WIDTH_MULTIPLIER = 1.15;
+    
+    // To adjust vertical position (how low/high), change the multiplier below
+    // Higher value = lower position (0.25 = 25% of height downward, 0.35 = 35% downward)
+    const VERTICAL_OFFSET_MULTIPLIER = 0.30;
+    // ============================================
+
+    // Calculate base earring size
+    const baseEarringWidth = faceWidth * EARING_SIZE_MULTIPLIER;
+    
+    // Apply width multiplier to make earrings wider
+    const earringWidth = baseEarringWidth * EARING_WIDTH_MULTIPLIER;
 
     // Get PNG image dimensions to preserve aspect ratio
     const imgWidth = productImage.naturalWidth || productImage.width || 1;
@@ -184,11 +203,18 @@ export function drawProductOverlay(canvas, productImage, landmarks, category, im
     const rightEarX = earringLandmarks.rightEar.x * canvas.width;
     const rightEarY = earringLandmarks.rightEar.y * canvas.height;
 
-    // Slight vertical offset downward
-    const verticalOffset = earringHeight * 0.1;
+    // Vertical offset downward (increased for more realistic position)
+    const verticalOffset = earringHeight * VERTICAL_OFFSET_MULTIPLIER;
 
-    // Draw left earring (use the same PNG image)
+    // Draw left earring with realistic shadow/stroke effect
     ctx.save();
+    
+    // Add drop shadow for realistic depth
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 3;
+    
     ctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(
       productImage,
@@ -199,8 +225,15 @@ export function drawProductOverlay(canvas, productImage, landmarks, category, im
     );
     ctx.restore();
 
-    // Draw right earring (use the same PNG image)
+    // Draw right earring with realistic shadow/stroke effect
     ctx.save();
+    
+    // Add drop shadow for realistic depth
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = -2; // Shadow on opposite side for right ear
+    ctx.shadowOffsetY = 3;
+    
     ctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(
       productImage,

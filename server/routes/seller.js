@@ -4,6 +4,7 @@ import Product from '../models/Product.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireAuth, requireSeller } from '../middleware/rbac.js';
 import { upload } from '../middleware/upload.js';
+import { uploadToCloudinary } from '../utils/cloudinary.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -160,7 +161,28 @@ router.post('/products', requireSeller, upload.single('image'), async (req, res)
       });
     }
 
-    // Create product
+    // Upload to Cloudinary
+    let cloudinaryResult;
+    try {
+      cloudinaryResult = await uploadToCloudinary(req.file.path, {
+        folder: 'ai-tryon/products',
+      });
+      
+      // Delete local file after successful upload
+      fs.unlinkSync(req.file.path);
+    } catch (cloudinaryError) {
+      console.error('Cloudinary upload error:', cloudinaryError);
+      // Delete local file on error
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: 'Failed to upload image to Cloudinary'
+      });
+    }
+
+    // Create product with Cloudinary URL
     const product = new Product({
       sellerId: req.user._id,
       name,
@@ -168,7 +190,7 @@ router.post('/products', requireSeller, upload.single('image'), async (req, res)
       description: description || '',
       price: priceNum,
       image: {
-        original: `/uploads/${req.file.filename}`,
+        original: cloudinaryResult.secure_url,
       },
       status: 'PENDING',
     });
