@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getSellerProfile, getSellerProducts, getTrendingProducts } from '../api/client'
+import { getImageUrl } from '../utils/imageUtils'
 import Navbar from '../components/Navbar'
 
 const SellerDashboard = () => {
@@ -138,7 +139,7 @@ const SellerDashboard = () => {
                     <div className="aspect-square bg-white/10 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
                       {product.image?.original ? (
                         <img
-                          src={`http://localhost:5000${product.image.original}`}
+                          src={getImageUrl(product.image.original)}
                           alt={product.name}
                           className="w-full h-full object-contain"
                         />
@@ -179,7 +180,7 @@ const SellerDashboard = () => {
                     <div className="aspect-square bg-white/10 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
                       {product.image?.original ? (
                         <img
-                          src={`http://localhost:5000${product.image.original}`}
+                          src={getImageUrl(product.image.original)}
                           alt={product.name}
                           className="w-full h-full object-contain"
                         />

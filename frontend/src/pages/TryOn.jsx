@@ -71,9 +71,7 @@ const TryOn = () => {
       }
       
       // Handle both Cloudinary URLs and local URLs
-      img.src = product.image.original.startsWith('http') 
-        ? product.image.original 
-        : `http://localhost:5000${product.image.original}`
+      img.src = getImageUrl(product.image.original)
     }
 
     loadProductImage()
@@ -328,9 +326,7 @@ const TryOn = () => {
       }
       
       // Handle both Cloudinary URLs and local URLs
-      productImg.src = product.image.original.startsWith('http') 
-        ? product.image.original 
-        : `http://localhost:5000${product.image.original}`
+      productImg.src = getImageUrl(product.image.original)
     } catch (err) {
       setError(err.message || 'Failed to process try-on')
       setProcessing(false)
@@ -382,17 +378,13 @@ const TryOn = () => {
                   <>
                     <img
                       ref={productImageRef}
-                      src={product.image.original.startsWith('http') 
-                        ? product.image.original 
-                        : `http://localhost:5000${product.image.original}`}
+                      src={getImageUrl(product.image.original)}
                       alt={product.name}
                       className="w-full h-full object-contain"
                       style={{ display: 'none' }} // Hidden, used for overlay
                     />
                     <img
-                      src={product.image.original.startsWith('http') 
-                        ? product.image.original 
-                        : `http://localhost:5000${product.image.original}`}
+                      src={getImageUrl(product.image.original)}
                       alt={product.name}
                       className="w-full h-full object-contain"
                     />

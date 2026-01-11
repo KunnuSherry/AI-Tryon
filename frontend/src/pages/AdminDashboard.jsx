@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getPendingSellers, approveSeller, rejectSeller, getPendingProducts, approveProduct, rejectProduct } from '../api/client'
+import { getImageUrl } from '../utils/imageUtils'
 import Navbar from '../components/Navbar'
 
 const AdminDashboard = () => {
@@ -226,7 +227,7 @@ const AdminDashboard = () => {
                     <div className="aspect-square bg-white/10 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
                       {product.image?.original ? (
                         <img
-                          src={`http://localhost:5000${product.image.original}`}
+                          src={getImageUrl(product.image.original)}
                           alt={product.name}
                           className="w-full h-full object-contain"
                         />
