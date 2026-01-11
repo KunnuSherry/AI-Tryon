@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getProduct, submitTryOn } from '../api/client'
 import { initFaceMesh, processImage, drawProductOverlay, closeFaceMesh } from '../utils/mediapipe'
+import { getImageUrl } from '../utils/imageUtils'
 import Navbar from '../components/Navbar'
 
 const TryOn = () => {
